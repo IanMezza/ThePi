@@ -1,8 +1,8 @@
 /*Esta sera la aplicacion principal de la interfaz de usuario*/
 /*Primero se establece la comunicación con el servidor Node.js
 y se verfica el correcto funcionamiento de los sockets.*/
-var socketControl = io.connect('http://192.168.1.72:3000/control');
-var socketStream = io.connect('http://192.168.1.72:3000/stream');
+var socketControl = io.connect('http://192.168.1.67:3000/control');
+var socketStream = io.connect('http://192.168.1.67:3000/stream');
 
 
 

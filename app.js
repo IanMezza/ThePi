@@ -12,7 +12,8 @@ var fecha = new Date();
 var gpio = require("gpio");
 var gpioAlt =require("gpio");
 var gpio22, gpio21, intervalTimer, intervalTimer2;
-var puerto;
+var twitter = require('ntwitter')
+var flag1 = 0;
 /*
  * Se declaran algunas variables globales para la lógica
  * de la aplicación.
@@ -20,6 +21,14 @@ var puerto;
 var carga = new Array();
 carga[0] = 0;
 carga[1] = 0;
+
+var twit = new twitter({
+    consumer_key: 'Wu3Ztet4FN240Kzzu0Eow',
+    consumer_secret: 'i5ecmTQVFAVvlewlKB08Wm2z6V4DHPPUszHmEeBMz04',
+    access_token_key: '24846645-L7RiyboD7VRUPgcGXHTxUKELo4ACL8YFCwpWnL0cj',
+    access_token_secret: 'GvJkYZQuma7DixOaug9QBEBneaHrW8Ex8m9ipatBGY'
+});
+
 /*
  * Todos los ambientes
  */
@@ -65,7 +74,7 @@ var servidor = http.createServer(app).listen(app.get('port'), function() {
  * Se vincula la variable de socket 'io' al servidor http recien creado
  * 'servidor'
  */
- io = require('socket.io').listen(servidor);
+io = require('socket.io').listen(servidor);
 io.set('log level', 1);
 /*
  *Se manejarán espacios de nombres (namespaces) distintos para multiplexar el
@@ -98,6 +107,24 @@ var control = io.of('/control').on('connection', function(socket) {
         //console.log(typeof yearConsulta);
         //console.log(typeof mesConsulta);
         recuperaUnMes(socket, yearConsulta, mesConsulta);
+    });
+
+    //Iniciamos la conexión vía Twitter para recibir comandos de ON/OF
+    twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
+        stream.on('data', function(data) {
+            data.entities.hashtags.map(function(hashtag) {
+                console.log(data.user.screen_name + ' : ' + hashtag.text);
+                if (hashtag.text === 'GPION') {
+                    carga[0] = switchBandera(0, 1);
+                    actualizaCargas(socket, carga);
+                }
+                else if (hashtag.text === 'GPIOFF') {
+                    carga[0] = switchBandera(0, 0);
+                    actualizaCargas(socket, carga);
+
+                }
+            });
+        });
     });
 });
 /*
@@ -331,28 +358,3 @@ function apagaPin(n) {
 
     
 }
-
-function enciendePinGenerico (n) {
-    if (n === 0) var i = 22;
-    puerto = gpio.export(22, {
-        ready: function() {
-            intervalTimer = setInterval(function() {
-                puerto.set();
-            }, 100);
-        }
-    });
-}
-
-function apagaPinGenerico () {
-    setTimeout(function() {
-                clearInterval(intervalTimer);          // stops the voltage cycling
-                puerto.removeAllListeners('change');   // unbinds change event
-                puerto.reset();                        // sets header to low
-                puerto.unexport();                     // unexport the header
-            }, 100);
-}
-
-
-/*Hola mundo, este debe ser un bloque comentado
-y servirá de prueba para conocer el comportamiento
-de la función de comentado de bloques*/
