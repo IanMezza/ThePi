@@ -10,10 +10,8 @@ var app = express();
 var mysql = require('mysql');
 var fecha = new Date();
 var gpio = require("gpio");
-var gpioAlt =require("gpio");
 var gpio22, gpio21, intervalTimer, intervalTimer2;
 var twitter = require('ntwitter')
-var flag1 = 0;
 /*
  * Se declaran algunas variables globales para la lógica
  * de la aplicación.
@@ -55,11 +53,6 @@ if ('development' === app.get('env')) {
  * Rutas del sitio
  */
 app.get('/', routes.sirvePagina);
-app.get('/historial', routes.sirvePagina);
-app.get('/configuracion', routes.sirvePagina);
-app.get('/holamundo', routes.sirvePagina);
-app.get('/graficabase', routes.sirvePagina);
-app.get('/pruebas', routes.sirvePagina);
 app.get('/users', user.list);
 app.use(function(req, res, next) {
     res.send(404, 'Lo sentimos, no existe la pagina!');

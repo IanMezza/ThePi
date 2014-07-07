@@ -9,9 +9,3 @@ exports.sirvePagina = function(req, res) {
     else
         res.sendfile('./public' + archivo + '.html');
 };
-
-exports.sirveSubPagina = function(req, res) {
-    var archivo = req.route.path;
-    if (archivo === '/historial#')
-        res.sendfile('./public/historialBimestral.html');
-};
