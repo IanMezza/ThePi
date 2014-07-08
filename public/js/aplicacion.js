@@ -128,9 +128,7 @@ $("#hola").click(function () {
 socketStream.emit('solicitaGrafica');
 
 socketStream.on('resultadosGrafica', function (results) {
-    console.log(results);
-   // generaGrafica2(results, titulo, subtitulo);
-    generaGrafica2(results, titulo, subtitulo);
+    generaGrafica(results, titulo, subtitulo);
 });
 socketStream.emit('solicitaAnos');
 socketStream.on('resultadosAnos', function (results) {
@@ -178,7 +176,7 @@ function enviaCadena(cadena) {
     socketControl.emit('enviaCadena', cadena);
 }
 
-function generaGrafica2(resultados, titulo, subtitulo) {
+function generaGrafica(resultados, titulo, subtitulo) {
     var temp = resultados;
     var i;
     var ejeY = new Array();
