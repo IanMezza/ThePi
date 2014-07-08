@@ -300,14 +300,14 @@ function recuperaUnMes (socket, yearConsulta, mesConsulta) {
 
 //EN RASPBERRY PI Rev 2 GPIO 21 -> GPIO 27
 function enciendePin (n) {
-    console.log(n);
+    //console.log(n);
     switch (n) {
         case 0:
         gpio22 = gpio.export(22, {
             ready: function() {
                 intervalTimer = setInterval(function() {
                     gpio22.set();
-                    console.log('Ya exporte 22');
+                    //console.log('Ya exporte 22');
                 }, 100);
                     
             }
@@ -318,7 +318,7 @@ function enciendePin (n) {
             ready: function() {
                 intervalTimer2 = setInterval(function() {
                     gpio21.set();
-                    console.log('Ya exporte 21');
+                    //console.log('Ya exporte 21');
                 }, 100);
             }
         });

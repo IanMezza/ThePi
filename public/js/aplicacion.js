@@ -1,8 +1,8 @@
 /*Esta sera la aplicacion principal de la interfaz de usuario*/
 /*Primero se establece la comunicación con el servidor Node.js
 y se verfica el correcto funcionamiento de los sockets.*/
-var socketControl = io.connect('http://192.168.1.67:3000/control');
-var socketStream = io.connect('http://192.168.1.67:3000/stream');
+var socketControl = io.connect('http://192.168.1.73:3000/control');
+var socketStream = io.connect('http://192.168.1.73:3000/stream');
 
 
 
@@ -176,54 +176,6 @@ function actualizaCargas(nCarga, onOff) {
 
 function enviaCadena(cadena) {
     socketControl.emit('enviaCadena', cadena);
-}
-
-function generaGrafica(resultados, titulo, subtitulo) {
-    var temp = resultados;
-    var i;
-    var ejeY = new Array();
-    var ejeX = new Array();
-    for (i = 0; i < temp.length; i++) {
-        ejeY[i] = temp[i].valor;
-        ejeX[i] = temp[i].hora;
-    }
-    $('#graficaConsumo').highcharts({
-        title: {
-            text: titulo,
-            x: -20
-        },
-        subtitle: {
-            text: subtitulo,
-            x: -20
-        },
-        xAxis: {
-            type: 'datetime',
-            categories: ejeX
-        },
-        yAxis: {
-            title: {
-                text: 'Energia electrica'
-            },
-            plotlines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {
-            valueSuffix: ' KWh'
-        },
-        legend: {
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'middle',
-            borderWidth: 0
-        },
-        series: [{
-            name: 'KwH',
-            data: ejeY
-        }]
-    });
 }
 
 function generaGrafica2(resultados, titulo, subtitulo) {
