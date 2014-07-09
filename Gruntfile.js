@@ -2,7 +2,9 @@
 "use strict";
 
 var rutas = {
-  js: ['*.js', 'public/**/*.js']
+  js: ['*.js', 'public/**/*.js'],
+  html: ['public/**/*.html'],
+  css: ['public/**/*.css']
 };
 
 module.exports = function(grunt) {
@@ -26,6 +28,18 @@ module.exports = function(grunt) {
     watch: {
           js: {
             files: rutas.js,
+            options: {
+              livereload: true
+            }
+          },
+          css: {
+            files: rutas.css,
+            options: {
+              livereload: true
+            }
+          },
+          html: {
+            files: rutas.html,
             options: {
               livereload: true
             }

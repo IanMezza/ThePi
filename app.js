@@ -114,7 +114,6 @@ var control = io.of('/control').on('connection', function(socket) {
                 else if (hashtag.text === 'GPIOFF') {
                     carga[0] = switchBandera(0, 0);
                     actualizaCargas(socket, carga);
-
                 }
             });
         });
