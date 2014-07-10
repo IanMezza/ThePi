@@ -53,7 +53,6 @@ if ('development' === app.get('env')) {
  * Rutas del sitio
  */
 app.get('/', routes.sirvePagina);
-app.get('/users', user.list);
 app.use(function(req, res, next) {
     res.send(404, 'Lo sentimos, no existe la pagina!');
 });
@@ -75,14 +74,26 @@ io.set('log level', 1);
  *de datos en tiempo real
  */
 
+iniciaPines();
+
+
 /*
  * Aqui va el socket de control (botones y forms)
  */
 var control = io.of('/control').on('connection', function(socket) {
+    // Se monitorean los cambios en el GPIO y se actualizan las cargas
+    gpio22.on("change", function(val) {
+       actualizaCargas(socket, carga);
+    });
+    gpio27.on("change", function(val) {
+       actualizaCargas(socket, carga);
+    });
+
     socket.emit('controlConectado');
     actualizaCargas(socket, carga);
     socket.on('clienteControl', function() {
-        console.log('Ya respondio el cliente de control');
+        //iniciaPines();
+        //console.log(gpio22.value);
     });
 
     /*
@@ -91,7 +102,6 @@ var control = io.of('/control').on('connection', function(socket) {
      */
     socket.on('actualizaCarga', function(nCarga, onOff) {
         carga[nCarga] = switchBandera(nCarga, onOff);
-        actualizaCargas(socket, carga);
     });
     socket.on('enviaCadena', function(cadena){
         insertaUsuario(cadena);    
@@ -100,23 +110,6 @@ var control = io.of('/control').on('connection', function(socket) {
         //console.log(typeof yearConsulta);
         //console.log(typeof mesConsulta);
         recuperaUnMes(socket, yearConsulta, mesConsulta);
-    });
-
-    //Iniciamos la conexión vía Twitter para recibir comandos de ON/OF
-    twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
-        stream.on('data', function(data) {
-            data.entities.hashtags.map(function(hashtag) {
-                console.log(data.user.screen_name + ' : ' + hashtag.text);
-                if (hashtag.text === 'GPION') {
-                    carga[0] = switchBandera(0, 1);
-                    actualizaCargas(socket, carga);
-                }
-                else if (hashtag.text === 'GPIOFF') {
-                    carga[0] = switchBandera(0, 0);
-                    actualizaCargas(socket, carga);
-                }
-            });
-        });
     });
 });
 /*
@@ -138,6 +131,23 @@ var stream = io.of('/stream').on('connection', function(socket) {
         //console.log(yearConsulta);
         //console.log(mesConsulta);
         recuperaListaMeses(socket, yearConsulta);
+    });
+});
+
+//Iniciamos la conexión vía Twitter para recibir comandos de ON/OF
+twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
+    stream.on('data', function(data) {
+        data.entities.hashtags.map(function(hashtag) {
+            console.log(data.user.screen_name + ' : ' + hashtag.text);
+            if (hashtag.text === 'GPION') {
+                carga[0] = switchBandera(0, 1);
+                //actualizaCargas(socket, carga);
+            }
+            else if (hashtag.text === 'GPIOFF') {
+                carga[0] = switchBandera(0, 0);
+                //actualizaCargas(socket, carga);
+            }
+        });
     });
 });
 
@@ -208,7 +218,7 @@ function recuperaTodo(socket) {
  */
 function recuperaActual(socket) {
     var fecha = new Date();
-    console.log(fecha);
+    //console.log(fecha);
     var mesActual = fecha.getMonth()-2;// -1 para recuperar los datos del mes de abril.
     var fechaInicio = '2014-03-01'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
     var fechaActual = '2014-03-30'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
@@ -298,55 +308,50 @@ function recuperaUnMes (socket, yearConsulta, mesConsulta) {
 }
 
 //EN RASPBERRY PI Rev 2 GPIO 21 -> GPIO 27
+
+function iniciaPines() {
+    gpio22 = gpio.export(22, {
+        ready: function() {
+            console.log('Pin 22, listo!');
+        }
+    });
+    gpio27 = gpio.export(27, {
+        ready: function() {
+            console.log('Pin 27, listo!');
+        }
+    });
+}
+
 function enciendePin (n) {
-    //console.log(n);
     switch (n) {
         case 0:
-        gpio22 = gpio.export(22, {
-            ready: function() {
-                intervalTimer = setInterval(function() {
-                    gpio22.set();
-                    //console.log('Ya exporte 22');
-                }, 100);
-                    
-            }
-        });
+        intervalTimer = setInterval(function() {
+            gpio22.set();
+        }, 100);
         break;
         case 1:
-        gpio21 = gpio.export(27, {
-            ready: function() {
-                intervalTimer2 = setInterval(function() {
-                    gpio21.set();
-                    //console.log('Ya exporte 21');
-                }, 100);
-            }
-        });
+        intervalTimer2 = setInterval(function() {
+            gpio27.set();
+        }, 100);
         break;
-    }
-    
+    }    
 }
 
 function apagaPin(n) {
     switch(n) {
         case 0:
         setTimeout(function() {
-            clearInterval(intervalTimer);          // stops the voltage cycling
-            gpio22.removeAllListeners('change');   // unbinds change event
-            gpio22.reset();                        // sets header to low
-            gpio22.unexport();                     // unexport the header
+            clearInterval(intervalTimer);
+            gpio22.reset();
         }, 100)
                              
         break;
 
         case 1:
         setTimeout(function() {
-                    clearInterval(intervalTimer2);          // stops the voltage cycling
-                    gpio21.removeAllListeners('change');   // unbinds change event
-                    gpio21.reset();                        // sets header to low
-                    gpio21.unexport();                     // unexport the header
+                    clearInterval(intervalTimer2);
+                    gpio27.reset();
                 }, 100);
         break;
-    }
-
-    
+    }  
 }
