@@ -11,7 +11,9 @@ var mysql = require('mysql');
 var fecha = new Date();
 var gpio = require("gpio");
 var gpio22, gpio21, intervalTimer, intervalTimer2;
-var twitter = require('ntwitter')
+var twitter = require('ntwitter');
+var EventEmitter = require('events').EventEmitter;
+var nuevoTweet = new EventEmitter();
 /*
  * Se declaran algunas variables globales para la lógica
  * de la aplicación.
@@ -33,7 +35,7 @@ var twit = new twitter({
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-app.use(express.favicon(__dirname + '/public/images/favicon.ico'));
+app.use(express.favicon(__dirname + '/images/favicon.ico'));
 app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
@@ -62,6 +64,13 @@ app.use(function(req, res, next) {
 var servidor = http.createServer(app).listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
+
+iniciaPines();
+
+servidor.on('connection', function (stream) {
+  console.log('someone connected!');
+});
+
 /*
  * Se vincula la variable de socket 'io' al servidor http recien creado
  * 'servidor'
@@ -74,13 +83,17 @@ io.set('log level', 1);
  *de datos en tiempo real
  */
 
-iniciaPines();
-
-
 /*
  * Aqui va el socket de control (botones y forms)
  */
 var control = io.of('/control').on('connection', function(socket) {
+
+    nuevoTweet.on('nuevoTweet', function() {
+        console.log('Hay nuevo tweet');
+        //socket.emit('nuevoTweet');
+        recuperaTweets(socket);
+    });
+
     // Se monitorean los cambios en el GPIO y se actualizan las cargas
     gpio22.on("change", function(val) {
        actualizaCargas(socket, carga);
@@ -138,14 +151,13 @@ var stream = io.of('/stream').on('connection', function(socket) {
 twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
     stream.on('data', function(data) {
         data.entities.hashtags.map(function(hashtag) {
-            console.log(data.user.screen_name + ' : ' + hashtag.text);
+            //console.log(data.user.screen_name + ' : ' + hashtag.text);
+            insertaTweet(data.user.screen_name, hashtag.text);
             if (hashtag.text === 'GPION') {
                 carga[0] = switchBandera(0, 1);
-                //actualizaCargas(socket, carga);
             }
             else if (hashtag.text === 'GPIOFF') {
                 carga[0] = switchBandera(0, 0);
-                //actualizaCargas(socket, carga);
             }
         });
     });
@@ -167,13 +179,11 @@ function switchBandera(n, onOff) {
     if (carga[n] === 1 && onOff === 0) {
         carga[n] = 0;
         apagaPin(n);
-    }
-        
+    }    
     else if (carga[n] === 0 && onOff === 1) {
         carga[n] = 1;
         enciendePin(n);
-    }
-        
+    }   
     else
         console.log('algunError');
     return carga[n];
@@ -210,6 +220,14 @@ function recuperaTodo(socket) {
     cliente.query('SELECT * FROM registro', function(err, results) {
         enviaDatos(err, results, socket);
         //console.log(results[45].fecha);
+    });
+}
+
+function recuperaTweets(socket) {
+    cliente = conectaMySQL();
+    cliente.query('USE consumo');
+    cliente.query('SELECT * FROM tweets', function(err, results) {
+        enviaDatos(err, results, socket, 'Tweets');
     });
 }
 
@@ -270,6 +288,20 @@ function insertaUsuario(nombre) {
     cliente.query('INSERT INTO consumo.persona (nombre, hora) VALUES (\'' + nombre + '\', CURRENT_TIME)');
 }
 
+function insertaTweet(usuario, hashtag) {
+    cliente = conectaMySQL();
+    cliente.query('USE consumo');
+    cliente.query('INSERT INTO consumo.tweets (fecha, hora, usuario, tweet) VALUES (CURRENT_DATE, CURRENT_TIME, \'' + usuario + '\', \'' + hashtag + '\')', function(err, results) {
+        if (err) {
+            console.log('Error: ' + err.message);
+            throw err;
+        }
+        console.log('Ya estuvo');
+        nuevoTweet.emit('nuevoTweet');
+    });
+    
+}
+
 /*
  *Esta función recupera la lista de los meses en función del año de consulta.
  *@socket {socket.io} socket de comunicación.
@@ -312,12 +344,12 @@ function recuperaUnMes (socket, yearConsulta, mesConsulta) {
 function iniciaPines() {
     gpio22 = gpio.export(22, {
         ready: function() {
-            console.log('Pin 22, listo!');
+            //console.log('Pin 22, listo!');
         }
     });
     gpio27 = gpio.export(27, {
         ready: function() {
-            console.log('Pin 27, listo!');
+            //console.log('Pin 27, listo!');
         }
     });
 }
@@ -355,3 +387,26 @@ function apagaPin(n) {
         break;
     }  
 }
+
+/********************************************************
+MariaDB [consumo]> DESCRIBE registro;
++---------+--------------+------+-----+---------+-------+
+| Field   | Type         | Null | Key | Default | Extra |
++---------+--------------+------+-----+---------+-------+
+| fecha   | date         | YES  |     | NULL    |       |
+| hora    | time         | YES  |     | NULL    |       |
+| lectura | decimal(5,2) | YES  |     | NULL    |       |
++---------+--------------+------+-----+---------+-------+
+
+MariaDB [consumo]> DESCRIBE tweets;
++---------+-----------+------+-----+---------+-------+
+| Field   | Type      | Null | Key | Default | Extra |
++---------+-----------+------+-----+---------+-------+
+| fecha   | date      | YES  |     | NULL    |       |
+| hora    | time      | YES  |     | NULL    |       |
+| usuario | char(15)  | YES  |     | NULL    |       |
+| twitt   | char(140) | YES  |     | NULL    |       |
++---------+-----------+------+-----+---------+-------+
+
+
+*********************************************************/
