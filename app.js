@@ -7,6 +7,7 @@ var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
 var app = express();
+var rasp2c = require('./lib/pi2c');
 var mysql = require('mysql');
 var fecha = new Date();
 var gpio = require("gpio");
@@ -66,8 +67,9 @@ var servidor = http.createServer(app).listen(app.get('port'), function() {
 });
 
 iniciaPines();
+i2c();
 
-servidor.on('connection', function (stream) {
+servidor.once('connection', function (stream) {
   console.log('someone connected!');
 });
 
@@ -105,8 +107,7 @@ var control = io.of('/control').on('connection', function(socket) {
     socket.emit('controlConectado');
     actualizaCargas(socket, carga);
     socket.on('clienteControl', function() {
-        //iniciaPines();
-        //console.log(gpio22.value);
+        recuperaTweets(socket);
     });
 
     /*
@@ -388,6 +389,27 @@ function apagaPin(n) {
     }  
 }
 
+
+function i2c () {
+    // Dump the addresses 0x11 - 0x15 of the I2C device at address 0xa1 on the I2C bus
+    setInterval(function() {
+        rasp2c.dump(function(err, result) {
+            if (err) {
+                console.log(err);
+            } else {
+                //console.log(result);
+                console.log(parseInt(result));
+                ancho=(parseInt(result)*100)/255;
+                //socket.emit('pot', parseInt(ancho));
+            }
+            });
+            //setTimeout(function() {
+                
+            //}, 500);
+        }, 100);
+
+
+    }
 /********************************************************
 MariaDB [consumo]> DESCRIBE registro;
 +---------+--------------+------+-----+---------+-------+

@@ -1,6 +1,8 @@
 /*Esta sera la aplicacion principal de la interfaz de usuario*/
 /*Primero se establece la comunicación con el servidor Node.js
 y se verfica el correcto funcionamiento de los sockets.*/
+
+// TODO Fijar la IP
 var socketControl = io.connect('http://192.168.1.67:3000/control');
 var socketStream = io.connect('http://192.168.1.67:3000/stream');
 
@@ -9,7 +11,8 @@ socketControl.on('nuevoTwitt', function(usuario, hashtag) {
 });
 
 socketControl.on('Tweets', function(results) {
-    console.log(results);
+    //console.log(results);
+    recibeTweets(results);
 });
 
 
@@ -250,6 +253,15 @@ function recibeListaMeses(resultados) {
     };
 }
 
+
+function recibeTweets(resultados) {
+    var $ulLista;
+    $ulLista = $('#listaTweets').find('ul');
+    for (var i = resultados.length - 5; i <= resultados.length - 1; i++) {  // Solo los ultimos 5 tweets
+        var $liNuevoItem = $('<li class="list-group-item"/>').html(resultados[i].hora+' '+resultados[i].usuario+' '+resultados[i].tweet);
+        $ulLista.append($liNuevoItem);
+    };
+}
 //FUNCION LISTA
 
 
