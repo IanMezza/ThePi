@@ -3,8 +3,8 @@
 y se verfica el correcto funcionamiento de los sockets.*/
 
 // TODO Fijar la IP
-var socketControl = io.connect('http://192.168.1.67:3000/control');
-var socketStream = io.connect('http://192.168.1.67:3000/stream');
+var socketControl = io.connect('http://localhost:3000/control');
+var socketStream = io.connect('http://localhost:3000/stream');
 
 socketControl.on('nuevoTwitt', function(usuario, hashtag) {
     console.log(usuario, hashtag);
@@ -92,32 +92,28 @@ var ct = c.get(0).getContext('2d');
 var ctx = document.getElementById("medidorGrafica").getContext("2d");
 
 //This will get the first returned node in the jQuery collection.
-var myNewChart = new Chart(ctx);
-var lectura = {
-    value: 75,
-    color: "#F7464A"
-};
-var restante = {
-    value: 25,
-    color: "#E2EAE9"
-};
-var data = [lectura, restante];
-var options = {
-    animation: false,
-    percentageInnerCutout: 50
-};
-new Chart(ctx).Doughnut(data, options);
-$('#lectura').text(lectura.value + ' KwH');
 
-$("#hola").click(function () {
-    lectura.value = lectura.value + 1;
-    restante.value = restante.value - 1;
-    //data = [lectura, restante];
+socketStream.on('sensor', function(lectura) {
+    //console.log(lectura);
+    var myNewChart = new Chart(ctx);
+    var actual = {
+        value: lectura,
+        color: "#F7464A"
+    };
+    var restante = {
+        value: 1023-lectura,
+        color: "#E2EAE9"
+    };
+    var data = [actual, restante];
+    var options = {
+        animation: false,
+        percentageInnerCutout: 50
+    };
     new Chart(ctx).Doughnut(data, options);
-    $('#lectura').text(lectura.value + ' KwH');
-    console.log(data[0].value);
-});
-
+    $('#lectura').text(actual.value + ' KwH');
+    console.log(actual.value + ' kWh');
+    console.log(typeof actual.value);
+})
 
 /*
  ************************************************

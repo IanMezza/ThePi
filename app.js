@@ -15,6 +15,8 @@ var gpio22, gpio21, intervalTimer, intervalTimer2;
 var twitter = require('ntwitter');
 var EventEmitter = require('events').EventEmitter;
 var nuevoTweet = new EventEmitter();
+var pinEmitter = new EventEmitter();
+var sensor = new EventEmitter();
 /*
  * Se declaran algunas variables globales para la lógica
  * de la aplicación.
@@ -29,6 +31,54 @@ var twit = new twitter({
     access_token_key: '24846645-L7RiyboD7VRUPgcGXHTxUKELo4ACL8YFCwpWnL0cj',
     access_token_secret: 'GvJkYZQuma7DixOaug9QBEBneaHrW8Ex8m9ipatBGY'
 });
+
+
+// JOHNNY-FIVE
+
+
+var five = require("johnny-five"),
+    sp = require("serialport");
+
+var board;//, port;
+/*
+port = new sp.SerialPort("/dev/ttyACM0", {
+    baudrate: 57600, // No other boud rate works
+    buffersize: 128 // Firmata uses 1
+});
+*/
+board = new five.Board({
+   // port: port
+});
+
+board.on("ready", function() {
+    var lectura;
+    var potentiometer = new five.Sensor({
+        pin: 'A0',
+        freq: 2.0833 //480 Hz
+    });
+    board.repl.inject({
+        pot: potentiometer
+    });
+    pinEmitter.on('setPin', function(n) {
+        (new five.Led(n)).strobe();
+    });
+    //(new five.Led(13)).strobe();
+
+    potentiometer.on("data", function() {
+        lectura = this.value;
+        //insertaLectura(this.value);
+        console.log(this.value);
+        sensor.emit('lectura', this.value);
+    });
+});
+
+
+////////////////////////////////////////////////////////
+
+
+
+
+
 
 /*
  * Todos los ambientes
@@ -66,8 +116,8 @@ var servidor = http.createServer(app).listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
 
-iniciaPines();
-i2c();
+//iniciaPines();
+//i2c();
 
 servidor.once('connection', function (stream) {
   console.log('someone connected!');
@@ -93,9 +143,10 @@ var control = io.of('/control').on('connection', function(socket) {
     nuevoTweet.on('nuevoTweet', function() {
         console.log('Hay nuevo tweet');
         //socket.emit('nuevoTweet');
-        recuperaTweets(socket);
+        //recuperaTweets(socket);
     });
 
+/*
     // Se monitorean los cambios en el GPIO y se actualizan las cargas
     gpio22.on("change", function(val) {
        actualizaCargas(socket, carga);
@@ -103,11 +154,11 @@ var control = io.of('/control').on('connection', function(socket) {
     gpio27.on("change", function(val) {
        actualizaCargas(socket, carga);
     });
-
+*/
     socket.emit('controlConectado');
     actualizaCargas(socket, carga);
     socket.on('clienteControl', function() {
-        recuperaTweets(socket);
+        //recuperaTweets(socket);
     });
 
     /*
@@ -131,6 +182,10 @@ var control = io.of('/control').on('connection', function(socket) {
  */
 var stream = io.of('/stream').on('connection', function(socket) {
     socket.emit('streamConectado');
+    sensor.on('lectura', function(lectura) {
+        //console.log('Hey');
+        socket.emit('sensor', lectura);
+    });
     socket.on('solicitaGrafica', function() {
         recuperaActual(socket);
     });
@@ -207,7 +262,7 @@ function conectaMySQL() {
     var client = mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: 'whatthefuck'
+        password: ''// 'whatthefuck'
     });
     return client;
 }
@@ -238,11 +293,11 @@ function recuperaTweets(socket) {
 function recuperaActual(socket) {
     var fecha = new Date();
     //console.log(fecha);
-    var mesActual = fecha.getMonth()-2;// -1 para recuperar los datos del mes de abril.
+    var mesActual = fecha.getMonth()+1;// -1 para recuperar los datos del mes de abril.
     var fechaInicio = '2014-03-01'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
     var fechaActual = '2014-03-30'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
     //console.log(fechaInicio);
-    //console.log(fechaActual);
+    //console.log(fechaActual); 
     cliente = conectaMySQL();
     cliente.query('USE consumo');
     cliente.query('SELECT * FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\'', function(err, results) { //FIXME
@@ -299,8 +354,13 @@ function insertaTweet(usuario, hashtag) {
         }
         console.log('Ya estuvo');
         nuevoTweet.emit('nuevoTweet');
-    });
-    
+    });   
+}
+
+function insertaLectura(lectura) {
+    cliente = conectaMySQL();
+    cliente.query('USE consumo');
+    cliente.query('INSERT INTO consumo.registro (fecha, hora, lectura) VALUES (CURRENT_DATE, CURRENT_TIME, \'' + lectura + '\')');
 }
 
 /*
@@ -361,6 +421,7 @@ function enciendePin (n) {
         intervalTimer = setInterval(function() {
             gpio22.set();
         }, 100);
+        pinEmitter.emit('setPin', 13);
         break;
         case 1:
         intervalTimer2 = setInterval(function() {
@@ -390,26 +451,26 @@ function apagaPin(n) {
 }
 
 
-function i2c () {
-    // Dump the addresses 0x11 - 0x15 of the I2C device at address 0xa1 on the I2C bus
-    setInterval(function() {
-        rasp2c.dump(function(err, result) {
-            if (err) {
-                console.log(err);
-            } else {
-                //console.log(result);
-                console.log(parseInt(result));
-                ancho=(parseInt(result)*100)/255;
-                //socket.emit('pot', parseInt(ancho));
-            }
-            });
-            //setTimeout(function() {
+// function i2c () {
+//     // Dump the addresses 0x11 - 0x15 of the I2C device at address 0xa1 on the I2C bus
+//     setInterval(function() {
+//         rasp2c.dump(function(err, result) {
+//             if (err) {
+//                 console.log(err);
+//             } else {
+//                 //console.log(result);
+//                 console.log(parseInt(result));
+//                 ancho=(parseInt(result)*100)/255;
+//                 //socket.emit('pot', parseInt(ancho));
+//             }
+//             });
+//             //setTimeout(function() {
                 
-            //}, 500);
-        }, 100);
+//             //}, 500);
+//         }, 100);
 
 
-    }
+//     }
 /********************************************************
 MariaDB [consumo]> DESCRIBE registro;
 +---------+--------------+------+-----+---------+-------+
