@@ -51,7 +51,13 @@ board = new five.Board({
 });
 
 board.on("ready", function() {
-    var lectura;
+    var muestras = 0;
+    var lectura, lecturaCuadrada;
+    var suma = 0;
+    var corrienteRMS = 0;
+    var voltsRMS = 120;
+    var watts = 0;
+    var kWh = 0;
     var potentiometer = new five.Sensor({
         pin: 'A0',
         freq: 2.0833 //480 Hz
@@ -64,11 +70,28 @@ board.on("ready", function() {
     });
     //(new five.Led(13)).strobe();
 
-    potentiometer.on("data", function() {
+    potentiometer.scale([0, 4]).on("data", function() {
         lectura = this.value;
         //insertaLectura(this.value);
-        console.log(this.value);
-        sensor.emit('lectura', this.value);
+        //console.log(lectura);
+        
+        if (muestras <= 480) { // SE CALCULA LA CORRIENTE RMS CADA SEGUNDO CON 480 MUESTRAS
+            // Se eleva al cuadrado cada lectura
+            lecturaCuadrada = Math.pow(lectura, 2);
+            // Se hace arrastre de suma
+            suma = suma + lecturaCuadrada;
+            muestras = muestras+1;
+        }
+        else if (muestras > 480) {
+            // Se divide entre el numero de muestras y se calcula la raiz cuadrada de la suma
+            corrienteRMS = Math.sqrt(suma/muestras);
+            watts = corrienteRMS * voltsRMS;
+            kWh = watts * 0.001;
+            sensor.emit('lectura', watts);
+            //insertaLectura(kWh);
+            suma = 0;
+            muestras = 0;
+        }
     });
 });
 

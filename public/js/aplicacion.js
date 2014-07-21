@@ -101,7 +101,7 @@ socketStream.on('sensor', function(lectura) {
         color: "#F7464A"
     };
     var restante = {
-        value: 1023-lectura,
+        value: 480-lectura,
         color: "#E2EAE9"
     };
     var data = [actual, restante];
@@ -110,7 +110,7 @@ socketStream.on('sensor', function(lectura) {
         percentageInnerCutout: 50
     };
     new Chart(ctx).Doughnut(data, options);
-    $('#lectura').text(actual.value + ' KwH');
+    $('#lectura').text(actual.value.toFixed(2) + ' W/h');
     console.log(actual.value + ' kWh');
     console.log(typeof actual.value);
 })
