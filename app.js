@@ -60,7 +60,7 @@ board.on("ready", function() {
     var kWh = 0;
     var potentiometer = new five.Sensor({
         pin: 'A0',
-        freq: 2.0833 //480 Hz
+        freq: 2 //500 Hz
     });
     board.repl.inject({
         pot: potentiometer
@@ -75,20 +75,20 @@ board.on("ready", function() {
         //insertaLectura(this.value);
         //console.log(lectura);
         
-        if (muestras <= 480) { // SE CALCULA LA CORRIENTE RMS CADA SEGUNDO CON 480 MUESTRAS
+        if (muestras < 500) { // SE CALCULA LA CORRIENTE RMS CADA SEGUNDO CON 480 MUESTRAS
             // Se eleva al cuadrado cada lectura
             lecturaCuadrada = Math.pow(lectura, 2);
             // Se hace arrastre de suma
             suma = suma + lecturaCuadrada;
             muestras = muestras+1;
         }
-        else if (muestras > 480) {
+        else if (muestras >= 500) {
             // Se divide entre el numero de muestras y se calcula la raiz cuadrada de la suma
             corrienteRMS = Math.sqrt(suma/muestras);
             watts = corrienteRMS * voltsRMS;
             kWh = watts * 0.001;
             sensor.emit('lectura', watts);
-            //insertaLectura(kWh);
+            insertaLectura(kWh);
             suma = 0;
             muestras = 0;
         }
@@ -315,12 +315,12 @@ function recuperaTweets(socket) {
  */
 function recuperaActual(socket) {
     var fecha = new Date();
-    //console.log(fecha);
+    console.log(fecha);
     var mesActual = fecha.getMonth()+1;// -1 para recuperar los datos del mes de abril.
-    var fechaInicio = '2014-03-01'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
-    var fechaActual = '2014-03-30'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
-    //console.log(fechaInicio);
-    //console.log(fechaActual); 
+    var fechaInicio = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
+    var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
+    console.log(fechaInicio);
+    console.log(fechaActual); 
     cliente = conectaMySQL();
     cliente.query('USE consumo');
     cliente.query('SELECT * FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\'', function(err, results) { //FIXME
@@ -382,8 +382,10 @@ function insertaTweet(usuario, hashtag) {
 
 function insertaLectura(lectura) {
     cliente = conectaMySQL();
+    cliente.connect();
     cliente.query('USE consumo');
     cliente.query('INSERT INTO consumo.registro (fecha, hora, lectura) VALUES (CURRENT_DATE, CURRENT_TIME, \'' + lectura + '\')');
+    cliente.end();
 }
 
 /*
