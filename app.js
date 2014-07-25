@@ -35,66 +35,7 @@ var twit = new twitter({
 
 // JOHNNY-FIVE
 
-
-var five = require("johnny-five"),
-    sp = require("serialport");
-
-var board;//, port;
-/*
-port = new sp.SerialPort("/dev/ttyACM0", {
-    baudrate: 57600, // No other boud rate works
-    buffersize: 128 // Firmata uses 1
-});
-*/
-board = new five.Board({
-   // port: port
-});
-
-board.on("ready", function() {
-    var muestras = 0;
-    var lectura, lecturaCuadrada;
-    var suma = 0;
-    var corrienteRMS = 0;
-    var voltsRMS = 120;
-    var watts = 0;
-    var kWh = 0;
-    var potentiometer = new five.Sensor({
-        pin: 'A0',
-        freq: 2 //500 Hz
-    });
-    board.repl.inject({
-        pot: potentiometer
-    });
-    pinEmitter.on('setPin', function(n) {
-        (new five.Led(n)).strobe();
-    });
-    //(new five.Led(13)).strobe();
-
-    potentiometer.scale([0, 4]).on("data", function() {
-        lectura = this.value;
-        //insertaLectura(this.value);
-        //console.log(lectura);
-        
-        if (muestras < 500) { // SE CALCULA LA CORRIENTE RMS CADA SEGUNDO CON 480 MUESTRAS
-            // Se eleva al cuadrado cada lectura
-            lecturaCuadrada = Math.pow(lectura, 2);
-            // Se hace arrastre de suma
-            suma = suma + lecturaCuadrada;
-            muestras = muestras+1;
-        }
-        else if (muestras >= 500) {
-            // Se divide entre el numero de muestras y se calcula la raiz cuadrada de la suma
-            corrienteRMS = Math.sqrt(suma/muestras);
-            watts = corrienteRMS * voltsRMS;
-            kWh = watts * 0.001;
-            sensor.emit('lectura', watts);
-            insertaLectura(kWh);
-            suma = 0;
-            muestras = 0;
-        }
-    });
-});
-
+require('./firmware')(pinEmitter, sensor, insertaLectura);
 
 ////////////////////////////////////////////////////////
 
@@ -316,16 +257,17 @@ function recuperaTweets(socket) {
 function recuperaActual(socket) {
     var fecha = new Date();
     console.log(fecha);
-    var mesActual = fecha.getMonth()+1;// -1 para recuperar los datos del mes de abril.
+    var mesActual = fecha.getMonth()+1;
     var fechaInicio = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
     var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
-    console.log(fechaInicio);
-    console.log(fechaActual); 
+    //console.log(fechaInicio);
+    //console.log(fechaActual); 
     cliente = conectaMySQL();
     cliente.query('USE consumo');
-    cliente.query('SELECT * FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\'', function(err, results) { //FIXME
-        //console.log(results.length);
-       // console.log(results[results.length - 1].fecha);
+    //SELECT DATE(fecha) as fecha, SUM(lectura) FROM registro WHERE fecha >= '2014-07-01' AND fecha <= '2014-07-24' GROUP BY DATE(fecha);
+    cliente.query('SELECT DATE(fecha) AS FECHA, SUM(lectura) AS Consumo_total FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\' GROUP BY FECHA', function(err, results) { //FIXME
+        // console.log(results);
+        // console.log(typeof results[results.length - 1].FECHA);
         enviaDatos(err, results, socket, 'resultadosGrafica');
         return results;
     });
@@ -369,6 +311,7 @@ function insertaUsuario(nombre) {
 
 function insertaTweet(usuario, hashtag) {
     cliente = conectaMySQL();
+    cliente.connect();
     cliente.query('USE consumo');
     cliente.query('INSERT INTO consumo.tweets (fecha, hora, usuario, tweet) VALUES (CURRENT_DATE, CURRENT_TIME, \'' + usuario + '\', \'' + hashtag + '\')', function(err, results) {
         if (err) {
@@ -378,6 +321,7 @@ function insertaTweet(usuario, hashtag) {
         console.log('Ya estuvo');
         nuevoTweet.emit('nuevoTweet');
     });   
+    cliente.end();
 }
 
 function insertaLectura(lectura) {
@@ -443,9 +387,9 @@ function iniciaPines() {
 function enciendePin (n) {
     switch (n) {
         case 0:
-        intervalTimer = setInterval(function() {
-            gpio22.set();
-        }, 100);
+        // intervalTimer = setInterval(function() {
+        //     gpio22.set();
+        // }, 100);
         pinEmitter.emit('setPin', 13);
         break;
         case 1:
@@ -515,6 +459,10 @@ MariaDB [consumo]> DESCRIBE tweets;
 | usuario | char(15)  | YES  |     | NULL    |       |
 | twitt   | char(140) | YES  |     | NULL    |       |
 +---------+-----------+------+-----+---------+-------+
+
+
+SELECT EXTRACT(DAY FROM fecha) AS dias FROM registro WHERE fecha >= '2014-07-01' AND fecha <='2014-07-31' GROUP BY dias;
+
 
 
 *********************************************************/

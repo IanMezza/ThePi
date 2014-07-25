@@ -185,13 +185,14 @@ function enviaCadena(cadena) {
 }
 
 function generaGrafica(resultados, titulo, subtitulo) {
+    console.log(resultados);
     var temp = resultados;
     var i;
     var ejeY = new Array();
     var ejeX = new Array();
     for (i = 0; i < temp.length; i++) {
-        ejeY[i] = temp[i].lectura;
-        ejeX[i] = temp[i].fecha.slice(8,10);
+        ejeY[i] = temp[i].Consumo_total;
+        ejeX[i] = temp[i].FECHA.slice(8,10);
     }
     $('#graficaConsumo').highcharts({
         title: {
