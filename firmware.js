@@ -15,13 +15,6 @@ module.exports = function(pinEmitter, sensor, insertaLectura) {
     });
 
     board.on("ready", function() {
-        // var led_13 = new five.Led(13);
-        // var led_12 = new five.Led(12);
-        // var led_11 = new five.Led(11);
-        // var led_10 = new five.Led(10);
-        // var led_9 = new five.Led(9);
-        // var led_8 = new five.Led(8);
-        // var led_7 = new five.Led(7);
         var muestras = 0;
         var lectura, lecturaCuadrada;
         var suma = 0;
@@ -35,21 +28,11 @@ module.exports = function(pinEmitter, sensor, insertaLectura) {
         });
         board.repl.inject({
             pot: potentiometer,
-            // led_7 : led_7,
-            // led_8 : led_8,
-            // led_9 : led_9,
-            // led_10 : led_10,
-            // led_11 : led_11,
-            // led_11 : led_11,
-            // led_12 : led_12,
-            // led_12 : led_12,
-            // led_13 : led_13
         });
         pinEmitter.on('setPin', function(pinN, onOff) {
             if (onOff === 1) (new five.Led(pinN)).on();
             else (new five.Led(pinN)).off();
         });
-        //(new five.Led(13)).strobe();
 
         potentiometer.scale([0, 4]).on("data", function() {
             lectura = this.value;
@@ -83,13 +66,5 @@ module.exports = function(pinEmitter, sensor, insertaLectura) {
                 muestras = 0;
             }  */
         });
-
-    // led_8.strobe(500);
-    // led_9.strobe(500);
-    // led_10.strobe(500);
-    // led_11.strobe(500);
-    // led_12.strobe(500);
-    // led_13.strobe(500);
-
     });
 }

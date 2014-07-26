@@ -80,7 +80,7 @@ var servidor = http.createServer(app).listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
 
-//iniciaPines();
+iniciaPines();
 //i2c();
 
 servidor.once('connection', function (stream) {
@@ -106,11 +106,11 @@ var control = io.of('/control').on('connection', function(socket) {
 
     nuevoTweet.on('nuevoTweet', function() {
         console.log('Hay nuevo tweet');
-        //socket.emit('nuevoTweet');
-        //recuperaTweets(socket);
+        socket.emit('nuevoTweet');
+        recuperaTweets(socket);
     });
 
-/*
+
     // Se monitorean los cambios en el GPIO y se actualizan las cargas
     gpio22.on("change", function(val) {
        actualizaCargas(socket, carga);
@@ -118,11 +118,11 @@ var control = io.of('/control').on('connection', function(socket) {
     gpio27.on("change", function(val) {
        actualizaCargas(socket, carga);
     });
-*/
+
     socket.emit('controlConectado');
     actualizaCargas(socket, carga);
     socket.on('clienteControl', function() {
-        //recuperaTweets(socket);
+        recuperaTweets(socket);
     });
 
     /*
@@ -231,7 +231,7 @@ function conectaMySQL() {
     var client = mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: ''// 'whatthefuck'
+        password: 'whatthefuck'
     });
     return client;
 }
@@ -392,10 +392,10 @@ function iniciaPines() {
 function enciendePin (n) {
     switch (n) {
         case 0:
-        // intervalTimer = setInterval(function() {
-        //     gpio22.set();
-        // }, 100);
-        pinEmitter.emit('setPin', 13);
+        intervalTimer = setInterval(function() {
+            gpio22.set();
+        }, 100);
+        //pinEmitter.emit('setPin', 13);
         break;
         case 1:
         intervalTimer2 = setInterval(function() {
