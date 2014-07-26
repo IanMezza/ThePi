@@ -156,7 +156,8 @@ var stream = io.of('/stream').on('connection', function(socket) {
         socket.emit('sensor', lectura);
     });
     socket.on('solicitaGrafica', function() {
-        recuperaActual(socket);
+        //recuperaActual(socket);
+        recuperaPeriodo(socket);
     });
     socket.on('solicitaAnos', function() {
         recuperaListaAnos(socket);
