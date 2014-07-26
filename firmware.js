@@ -3,15 +3,15 @@ module.exports = function(pinEmitter, sensor, insertaLectura) {
     var five = require("johnny-five"),
         sp = require("serialport");
 
-    var board;//, port;
-    /*
+    var board, port;
+    
     port = new sp.SerialPort("/dev/ttyACM0", {
         baudrate: 57600, // No other boud rate works
         buffersize: 128 // Firmata uses 1
     });
-    */
+   
     board = new five.Board({
-       // port: port
+      port: port
     });
 
     board.on("ready", function() {
