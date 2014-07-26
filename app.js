@@ -156,8 +156,7 @@ var stream = io.of('/stream').on('connection', function(socket) {
         socket.emit('sensor', lectura);
     });
     socket.on('solicitaGrafica', function() {
-        //recuperaActual(socket);
-        recuperaPeriodo(socket);
+        recuperaActual(socket);
     });
     socket.on('solicitaAnos', function() {
         recuperaListaAnos(socket);
@@ -264,8 +263,8 @@ function recuperaActual(socket) {
     var fecha = new Date();
     console.log(fecha);
     var mesActual = fecha.getMonth()+1;
-    var fechaInicio = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
-    var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
+    var fechaInicio = '2014-03-01'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
+    var fechaActual = '2014-03-30'//String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
     //console.log(fechaInicio);
     //console.log(fechaActual); 
     cliente = conectaMySQL();
