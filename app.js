@@ -132,6 +132,11 @@ var control = io.of('/control').on('connection', function(socket) {
     socket.on('actualizaCarga', function(nCarga, onOff) {
         carga[nCarga] = switchBandera(nCarga, onOff);
     });
+
+    socket.on('setPin', function(pinN, onOff) {
+        pinEmitter.emit('setPin', pinN, onOff);
+    });
+
     socket.on('enviaCadena', function(cadena){
         insertaUsuario(cadena);    
     });

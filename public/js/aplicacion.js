@@ -39,6 +39,62 @@ $('#off2').click(function () {
     actualizaCargas(1, 0);
     console.log('Off2');
 });
+
+$('#pin13on').click(function () {
+    setPines(13, 1);
+});
+
+$('#pin12on').click(function () {
+    setPines(12, 1);
+});
+
+$('#pin11on').click(function () {
+    setPines(11, 1);
+});
+
+$('#pin10on').click(function () {
+    setPines(10, 1);
+});
+
+$('#pin9on').click(function () {
+    setPines(9, 1);
+});
+
+$('#pin8on').click(function () {
+    setPines(8, 1);
+});
+
+$('#pin7on').click(function () {
+    setPines(7, 1);
+});
+
+$('#pin13off').click(function () {
+    setPines(13, 0);
+});
+
+$('#pin12off').click(function () {
+    setPines(12, 0);
+});
+
+$('#pin11off').click(function () {
+    setPines(11, 0);
+});
+
+$('#pin10off').click(function () {
+    setPines(10, 0);
+});
+
+$('#pin9off').click(function () {
+    setPines(9, 0);
+});
+
+$('#pin8off').click(function () {
+    setPines(8, 0);
+});
+
+$('#pin7off').click(function () {
+    setPines(7, 0);
+});
 /*
  ****************************
  */
@@ -178,6 +234,10 @@ $(document).on("click", '[title="Haz click"]', function() {
 
 function actualizaCargas(nCarga, onOff) {
     socketControl.emit('actualizaCarga', nCarga, onOff);
+}
+
+function setPines(pinN, onOff) {
+    socketControl.emit('setPin', pinN, onOff);
 }
 
 function enviaCadena(cadena) {
