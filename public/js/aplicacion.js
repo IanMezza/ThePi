@@ -4,8 +4,8 @@
 y se verfica el correcto funcionamiento de los sockets.*/
 
 // TODO Fijar la IP
-var socketControl = io.connect('http://192.168.1.65:3000/control');
-var socketStream = io.connect('http://192.168.1.65:3000/stream');
+var socketControl = io.connect('http://localhost:3000/control');
+var socketStream = io.connect('http://localhost:3000/stream');
 
 socketControl.on('nuevoTwitt', function(usuario, hashtag) {
     console.log(usuario, hashtag);
@@ -168,8 +168,6 @@ socketStream.on('sensor', function(lectura) {
     };
     new Chart(ctx).Doughnut(data, options);
     $('#lectura').text(actual.value.toFixed(2) + ' W/h');
-    console.log(actual.value + ' kWh');
-    console.log(typeof actual.value);
 })
 
 /*

@@ -3,15 +3,14 @@
  */
 var express = require('express');
 var routes = require('./routes');
+//var config = require('./config');
 var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
 var app = express();
-var rasp2c = require('./lib/pi2c');
+//var rasp2c = require('./lib/pi2c');
 var mysql = require('mysql');
 var fecha = new Date();
-var gpio = require("gpio");
-var gpio22, gpio21, intervalTimer, intervalTimer2;
 var twitter = require('ntwitter');
 var EventEmitter = require('events').EventEmitter;
 var nuevoTweet = new EventEmitter();
@@ -35,14 +34,7 @@ var twit = new twitter({
 
 // JOHNNY-FIVE
 
-require('./firmware')(pinEmitter, sensor, insertaLectura);
-
-////////////////////////////////////////////////////////
-
-
-
-
-
+require('./firmware/mega2560')(pinEmitter, sensor, insertaLectura);
 
 /*
  * Todos los ambientes
@@ -79,8 +71,8 @@ app.use(function(req, res, next) {
 var servidor = http.createServer(app).listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
-
-iniciaPines();
+var raspberry = require('./firmware/raspberry');
+//raspberry.init(iniciaPines);
 //i2c();
 
 servidor.once('connection', function (stream) {
@@ -112,12 +104,7 @@ var control = io.of('/control').on('connection', function(socket) {
 
 
     // Se monitorean los cambios en el GPIO y se actualizan las cargas
-    gpio22.on("change", function(val) {
-       actualizaCargas(socket, carga);
-    });
-    gpio27.on("change", function(val) {
-       actualizaCargas(socket, carga);
-    });
+    //raspberry.huboCambio(actualizaCargas);
 
     socket.emit('controlConectado');
     actualizaCargas(socket, carga);
@@ -141,8 +128,6 @@ var control = io.of('/control').on('connection', function(socket) {
         insertaUsuario(cadena);    
     });
     socket.on('consultaUnMes', function(yearConsulta, mesConsulta) {
-        //console.log(typeof yearConsulta);
-        //console.log(typeof mesConsulta);
         recuperaUnMes(socket, yearConsulta, mesConsulta);
     });
 });
@@ -152,7 +137,6 @@ var control = io.of('/control').on('connection', function(socket) {
 var stream = io.of('/stream').on('connection', function(socket) {
     socket.emit('streamConectado');
     sensor.on('lectura', function(lectura) {
-        //console.log('Hey');
         socket.emit('sensor', lectura);
     });
     socket.on('solicitaGrafica', function() {
@@ -162,13 +146,10 @@ var stream = io.of('/stream').on('connection', function(socket) {
         recuperaListaAnos(socket);
     });
     socket.on('solicitaMeses', function(year) {
-        //console.log(year);
         recuperaListaMeses(socket, year);
     });
     socket.on('solicitaGraficaMes', function(yearConsulta, mesConsulta) {
-        //console.log(yearConsulta);
-        //console.log(mesConsulta);
-        recuperaListaMeses(socket, yearConsulta);
+        recuperaUnMes(socket, yearConsulta, mesConsulta);
     });
 });
 
@@ -176,7 +157,6 @@ var stream = io.of('/stream').on('connection', function(socket) {
 twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
     stream.on('data', function(data) {
         data.entities.hashtags.map(function(hashtag) {
-            //console.log(data.user.screen_name + ' : ' + hashtag.text);
             insertaTweet(data.user.screen_name, hashtag.text);
             if (hashtag.text === 'GPION') {
                 carga[0] = switchBandera(0, 1);
@@ -203,11 +183,11 @@ twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
 function switchBandera(n, onOff) {
     if (carga[n] === 1 && onOff === 0) {
         carga[n] = 0;
-        apagaPin(n);
+        raspberry.apagaPin(n);
     }    
     else if (carga[n] === 0 && onOff === 1) {
         carga[n] = 1;
-        enciendePin(n);
+        raspberry.enciendePin(n);
     }   
     else
         console.log('algunError');
@@ -231,7 +211,7 @@ function conectaMySQL() {
     var client = mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: 'whatthefuck'
+        password: '' //'whatthefuck'
     });
     return client;
 }
@@ -244,7 +224,6 @@ function recuperaTodo(socket) {
     cliente.query('USE consumo');
     cliente.query('SELECT * FROM registro', function(err, results) {
         enviaDatos(err, results, socket);
-        //console.log(results[45].fecha);
     });
 }
 
@@ -264,15 +243,10 @@ function recuperaActual(socket) {
     console.log(fecha);
     var mesActual = fecha.getMonth()+1;
     var fechaInicio = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
-    var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
-    //console.log(fechaInicio);
-    //console.log(fechaActual); 
+    var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate())); 
     cliente = conectaMySQL();
     cliente.query('USE consumo');
-    //SELECT DATE(fecha) as fecha, SUM(lectura) FROM registro WHERE fecha >= '2014-07-01' AND fecha <= '2014-07-24' GROUP BY DATE(fecha);
     cliente.query('SELECT DATE(fecha) AS FECHA, SUM(lectura) AS Consumo_total FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\' GROUP BY FECHA', function(err, results) { //FIXME
-        // console.log(results);
-        // console.log(typeof results[results.length - 1].FECHA);
         enviaDatos(err, results, socket, 'resultadosGrafica');
         return results;
     });
@@ -345,11 +319,9 @@ function insertaLectura(lectura) {
 function recuperaListaMeses(socket, yearConsulta) {
     var inicio = yearConsulta+'-01-01';
     var fin = yearConsulta+'-12-31';
-    //console.log(inicio);
     cliente = conectaMySQL();
     cliente.query('USE consumo');
     cliente.query('SELECT EXTRACT(MONTH FROM fecha) AS meses FROM registro WHERE fecha >= \'' + inicio + '\' AND fecha <= \'' + fin + '\' GROUP BY meses', function(err, results) {
-        //console.log(results);
         enviaDatos(err, results, socket, 'resultadosMeses');
     });
 }
@@ -358,70 +330,41 @@ function recuperaListaMeses(socket, yearConsulta) {
  *Función que recupera la lista de los años registrados en la base de datos.
  */
 function recuperaListaAnos(socket) {
-    //console.log('entramos a recuperaAnos');
     cliente = conectaMySQL();
     cliente.query('USE consumo');
     cliente.query('SELECT EXTRACT(YEAR FROM fecha) AS years FROM registro GROUP BY years', function(err, results) {
-        //console.log(results);
         enviaDatos(err, results, socket, 'resultadosAnos');
     });
 }
 
-function recuperaUnMes (socket, yearConsulta, mesConsulta) {
-    var inicio = yearConsulta+'-'+mesConsulta+'-01';
-    var fin = yearConsulta+'-'+mesConsulta+'-31';
-    console.log(inicio);
-    console.log(fin);
+function recuperaUnMes (socket, yearConsulta, mesConsultaFront) {
+    mesConsulta = mesAmes(mesConsultaFront);
+    var fechaInicio = yearConsulta+'-'+mesConsulta+'-01';
+    var fechaFinal = yearConsulta+'-'+mesConsulta+'-31';
+    console.log(mesConsulta);
+    cliente = conectaMySQL();
+    cliente.query('USE consumo');
+    cliente.query('SELECT DATE(fecha) AS FECHA, SUM(lectura) AS Consumo_total FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaFinal + '\' GROUP BY FECHA', function(err, results) { //FIXME
+         console.log(results);
+        enviaDatos(err, results, socket, 'resultadosGrafica');
+        return results;
+    });
 }
 
-//EN RASPBERRY PI Rev 2 GPIO 21 -> GPIO 27
 
-function iniciaPines() {
-    gpio22 = gpio.export(22, {
-        ready: function() {
-            //console.log('Pin 22, listo!');
-        }
-    });
-    gpio27 = gpio.export(27, {
-        ready: function() {
-            //console.log('Pin 27, listo!');
-        }
-    });
+function mesAmes(mesConsulta) {
+    var meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    for (i = 0; i <= 11; i++) {
+        if (mesConsulta === meses[i]) return i+1;
+    } 
 }
 
 function enciendePin (n) {
-    switch (n) {
-        case 0:
-        intervalTimer = setInterval(function() {
-            gpio22.set();
-        }, 100);
-        //pinEmitter.emit('setPin', 13);
-        break;
-        case 1:
-        intervalTimer2 = setInterval(function() {
-            gpio27.set();
-        }, 100);
-        break;
-    }    
+     
 }
 
 function apagaPin(n) {
-    switch(n) {
-        case 0:
-        setTimeout(function() {
-            clearInterval(intervalTimer);
-            gpio22.reset();
-        }, 100)
-                             
-        break;
-
-        case 1:
-        setTimeout(function() {
-                    clearInterval(intervalTimer2);
-                    gpio27.reset();
-                }, 100);
-        break;
-    }  
+    
 }
 
 
@@ -470,4 +413,4 @@ SELECT EXTRACT(DAY FROM fecha) AS dias FROM registro WHERE fecha >= '2014-07-01'
 
 
 
-*********************************************************/
+********************************************************/
