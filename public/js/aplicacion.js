@@ -15,10 +15,6 @@ socketControl.on('Tweets', function(results) {
     //console.log(results);
     recibeTweets(results);
 });
-
-
-
-
 /*
  * CONTROL DE CARGAS
  */

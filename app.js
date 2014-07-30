@@ -3,7 +3,6 @@
  */
 var express = require('express');
 var routes = require('./routes');
-//var config = require('./config');
 var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
@@ -32,9 +31,9 @@ var twit = new twitter({
 });
 
 
-// JOHNNY-FIVE
-
+// FIRMWARE
 require('./firmware/mega2560')(pinEmitter, sensor, insertaLectura);
+var raspberry = require('./firmware/raspberry');
 
 /*
  * Todos los ambientes
@@ -71,7 +70,7 @@ app.use(function(req, res, next) {
 var servidor = http.createServer(app).listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
-var raspberry = require('./firmware/raspberry');
+
 //raspberry.init(iniciaPines);
 //i2c();
 
@@ -248,7 +247,9 @@ function recuperaActual(socket) {
     cliente.query('USE consumo');
     cliente.query('SELECT DATE(fecha) AS FECHA, SUM(lectura) AS Consumo_total FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\' GROUP BY FECHA', function(err, results) { //FIXME
         enviaDatos(err, results, socket, 'resultadosGrafica');
-        return results;
+    });
+    cliente.query('SELECT SUM(lectura) AS Consumo_total_mensual FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\'', function(err, results) {
+        enviaDatos(err, results, socket, 'ConsumoTotalActual');
     });
     
 }
