@@ -4,8 +4,13 @@
 y se verfica el correcto funcionamiento de los sockets.*/
 
 // TODO Fijar la IP
+<<<<<<< HEAD
 var socketControl = io.connect('http://192.168.1.67:3000/control');
 var socketStream = io.connect('http://192.168.1.67:3000/stream');
+=======
+var socketControl = io.connect('http://localhost:3000/control');
+var socketStream = io.connect('http://localhost:3000/stream');
+>>>>>>> 7530769d29367c03e6d895a5e5ed98ccd557d8c6
 
 socketControl.on('nuevoTwitt', function(usuario, hashtag) {
     console.log(usuario, hashtag);
@@ -15,10 +20,6 @@ socketControl.on('Tweets', function(results) {
     //console.log(results);
     recibeTweets(results);
 });
-
-
-
-
 /*
  * CONTROL DE CARGAS
  */
@@ -168,8 +169,11 @@ socketStream.on('sensor', function(lectura) {
     };
     new Chart(ctx).Doughnut(data, options);
     $('#lectura').text(actual.value.toFixed(2) + ' W/h');
+<<<<<<< HEAD
     // console.log(actual.value + ' kWh');
     // console.log(typeof actual.value);
+=======
+>>>>>>> 7530769d29367c03e6d895a5e5ed98ccd557d8c6
 })
 
 /*
