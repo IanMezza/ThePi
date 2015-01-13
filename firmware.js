@@ -40,7 +40,7 @@ module.exports = function(pinEmitter, sensor, insertaLectura) {
             muestras = muestras + 1;
             if (muestras > 8) {
                 muestras = 0;
-                insertaLectura(lectura * voltsRMS / 1000);
+                //insertaLectura(lectura * voltsRMS / 1000);
             }
             /*  QUITAR COMENTARIO PARA TRABAJAR CON CORRIENTE ALTERNA
             if (muestras < 500) { // SE CALCULA LA CORRIENTE RMS CADA SEGUNDO CON 480 MUESTRAS

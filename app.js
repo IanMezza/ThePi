@@ -157,6 +157,7 @@ var stream = io.of('/stream').on('connection', function(socket) {
     });
     socket.on('solicitaGrafica', function() {
         recuperaActual(socket);
+        //recuperaPeriodo(socket);
     });
     socket.on('solicitaAnos', function() {
         recuperaListaAnos(socket);
@@ -172,6 +173,7 @@ var stream = io.of('/stream').on('connection', function(socket) {
     });
 });
 
+/*
 //Iniciamos la conexión vía Twitter para recibir comandos de ON/OF
 twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
     stream.on('data', function(data) {
@@ -187,7 +189,7 @@ twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
         });
     });
 });
-
+*/
 
 /*
  * Declaración de las funciones y definición para posible reutilización de
@@ -290,8 +292,9 @@ function recuperaPeriodo(socket) {
     cliente = conectaMySQL();
     cliente.query('USE consumo');
     cliente.query('SELECT * FROM registro WHERE fecha >= \'' + comienzo + '\' AND fecha <= \'' + fin + '\'', function(err, results) {
-        enviaDatos(err, results, socket);
+        enviaDatos(err, results, socket, 'resultadosGrafica');
         console.log(results);
+        return results;
     });
 }
 /*
