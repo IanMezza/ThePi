@@ -15,6 +15,12 @@ var EventEmitter = require('events').EventEmitter;
 var nuevoTweet = new EventEmitter();
 var pinEmitter = new EventEmitter();
 var sensor = new EventEmitter();
+var config = require('./config');
+db = config.database;
+
+console.log(db.host);
+console.log(db.user);
+
 /*
  * Se declaran algunas variables globales para la lógica
  * de la aplicación.
@@ -210,9 +216,9 @@ function actualizaCargas(socket, carga) {
  */
 function conectaMySQL() {
     var client = mysql.createConnection({
-        host: 'localhost',
-        user: 'root',
-        password: 'whatthefuck'
+        host: db.host,//'localhost',
+        user: db.user,//'root',
+        password: db.password//'whatthefuck'
     });
     return client;
 }
