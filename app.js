@@ -243,7 +243,7 @@ function recuperaTweets(socket) {
  */
 function recuperaActual(socket) {
     var fecha = new Date();
-    console.log(fecha);
+    //console.log(fecha);
     var mesActual = fecha.getMonth()+1;
     var fechaInicio = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
     var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate())); 
@@ -254,6 +254,7 @@ function recuperaActual(socket) {
     });
     cliente.query('SELECT SUM(lectura) AS Consumo_total_mensual FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\'', function(err, results) {
         enviaDatos(err, results, socket, 'ConsumoTotalActual');
+        console.log(results);
     });
     
 }
@@ -270,7 +271,7 @@ function recuperaPeriodo(socket) {
     cliente.query('USE consumo');
     cliente.query('SELECT * FROM registro WHERE fecha >= \'' + comienzo + '\' AND fecha <= \'' + fin + '\'', function(err, results) {
         enviaDatos(err, results, socket, 'resultadosGrafica');
-        console.log(results);
+        //console.log(results);
         return results;
     });
 }
@@ -347,11 +348,11 @@ function recuperaUnMes (socket, yearConsulta, mesConsultaFront) {
     mesConsulta = mesAmes(mesConsultaFront);
     var fechaInicio = yearConsulta+'-'+mesConsulta+'-01';
     var fechaFinal = yearConsulta+'-'+mesConsulta+'-31';
-    console.log(mesConsulta);
+    //console.log(mesConsulta);
     cliente = conectaMySQL();
     cliente.query('USE consumo');
     cliente.query('SELECT DATE(fecha) AS FECHA, SUM(lectura) AS Consumo_total FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaFinal + '\' GROUP BY FECHA', function(err, results) { //FIXME
-         console.log(results);
+         //console.log(results);
         enviaDatos(err, results, socket, 'resultadosGrafica');
         return results;
     });
@@ -413,6 +414,9 @@ MariaDB [consumo]> DESCRIBE tweets;
 | usuario | char(15)  | YES  |     | NULL    |       |
 | twitt   | char(140) | YES  |     | NULL    |       |
 +---------+-----------+------+-----+---------+-------+
+
+configCFE (Numero de servicio, fecha limite de pago, periodo de facturacion) 
+facturacionCFE(periodo de facturacion, promedio diario en kwh, promedio diario en $, total a pagar)
 
 
 SELECT EXTRACT(DAY FROM fecha) AS dias FROM registro WHERE fecha >= '2014-07-01' AND fecha <='2014-07-31' GROUP BY dias;

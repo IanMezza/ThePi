@@ -190,6 +190,11 @@ socketStream.emit('solicitaGrafica');
 socketStream.on('resultadosGrafica', function (results) {
     generaGrafica(results);
 });
+
+socketStream.on('ConsumoTotalActual', function (results) {
+    console.log(results[0].Consumo_total_mensual);
+});
+
 socketStream.emit('solicitaAnos');
 socketStream.on('resultadosAnos', function (results) {
     recibeListaAnos(results);
@@ -217,8 +222,8 @@ $(document).on("click", '[title="Haz click"]', function() {
     else {
         mesCosnulta = tmp;
         input = '#inputMes';
-        console.log(yearConsulta);
-        console.log(mesCosnulta);
+        // console.log(yearConsulta);
+        // console.log(mesCosnulta);
         socketStream.emit('solicitaGraficaMes', yearConsulta, mesCosnulta);
     }
     $(input).val(tmp);
