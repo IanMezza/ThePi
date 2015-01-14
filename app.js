@@ -414,11 +414,4 @@ MariaDB [consumo]> DESCRIBE tweets;
 
 
 SELECT EXTRACT(DAY FROM fecha) AS dias FROM registro WHERE fecha >= '2014-07-01' AND fecha <='2014-07-31' GROUP BY dias;
-
-
-
-<<<<<<< HEAD
-*********************************************************/
-=======
-********************************************************/
->>>>>>> 7530769d29367c03e6d895a5e5ed98ccd557d8c6
+*/
