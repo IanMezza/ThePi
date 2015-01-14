@@ -212,10 +212,12 @@ function conectaMySQL() {
     var client = mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        password: '' //'whatthefuck'
+        password: 'whatthefuck'
     });
     return client;
 }
+
+//Hola mundo
 
 /*
  * Hace una consulta de todos los elementos de la tabla de prueba

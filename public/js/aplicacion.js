@@ -4,13 +4,8 @@
 y se verfica el correcto funcionamiento de los sockets.*/
 
 // TODO Fijar la IP
-<<<<<<< HEAD
 var socketControl = io.connect('http://192.168.1.67:3000/control');
 var socketStream = io.connect('http://192.168.1.67:3000/stream');
-=======
-var socketControl = io.connect('http://localhost:3000/control');
-var socketStream = io.connect('http://localhost:3000/stream');
->>>>>>> 7530769d29367c03e6d895a5e5ed98ccd557d8c6
 
 socketControl.on('nuevoTwitt', function(usuario, hashtag) {
     console.log(usuario, hashtag);
@@ -169,12 +164,9 @@ socketStream.on('sensor', function(lectura) {
     };
     new Chart(ctx).Doughnut(data, options);
     $('#lectura').text(actual.value.toFixed(2) + ' W/h');
-<<<<<<< HEAD
     // console.log(actual.value + ' kWh');
     // console.log(typeof actual.value);
-=======
->>>>>>> 7530769d29367c03e6d895a5e5ed98ccd557d8c6
-})
+});
 
 /*
  ************************************************
@@ -196,7 +188,7 @@ socketStream.on('sensor', function(lectura) {
 socketStream.emit('solicitaGrafica');
 
 socketStream.on('resultadosGrafica', function (results) {
-    generaGrafica(results, titulo, subtitulo);
+    generaGrafica(results);
 });
 socketStream.emit('solicitaAnos');
 socketStream.on('resultadosAnos', function (results) {
@@ -217,10 +209,10 @@ $(document).on("click", '[title="Haz click"]', function() {
     var input;
     if (lista == 'anual') {
         yearConsulta = tmp;
-        mesCosnulta = '';
+        //mesCosnulta = '';
         input = '#inputAno';
         $('#botonMeses').removeAttr('disabled');
-        socketStream.emit('solicitaMeses', tmp);
+        socketStream.emit('solicitaMeses', yearConsulta);
     }
     else {
         mesCosnulta = tmp;
@@ -248,8 +240,10 @@ function enviaCadena(cadena) {
     socketControl.emit('enviaCadena', cadena);
 }
 
-function generaGrafica(resultados, titulo, subtitulo) {
-    console.log(resultados);
+function generaGrafica(resultados) {
+    titulo = meses[parseInt(resultados[0].FECHA.slice(5,7)) - 1];
+    subtitulo = resultados[0].FECHA.slice(0,4);
+
     var temp = resultados;
     var i;
     var ejeY = new Array();
