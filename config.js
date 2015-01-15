@@ -6,7 +6,7 @@ module.exports = {
 		host	: 'localhost',
 		user	: 'root',
 		password: ''
-	}
+	},
 
 	twitter : {
 		consumer_key		: 'consumer_key',
