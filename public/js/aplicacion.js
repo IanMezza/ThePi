@@ -181,9 +181,10 @@ socketStream.on('sensor', function(lectura) {
  meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
  var mes = fecha.getMonth();
  var year = fecha.getFullYear();
- var titulo = meses[mes];
+ var mesActual = meses[mes];
  var subtitulo = year;
  var yearConsulta, mesCosnulta, diaConsulta;
+ var ConsumoTotalActual = 0;
 
 socketStream.emit('solicitaGrafica');
 
@@ -192,7 +193,8 @@ socketStream.on('resultadosGrafica', function (results) {
 });
 
 socketStream.on('ConsumoTotalActual', function (results) {
-    console.log(results[0].Consumo_total_mensual);
+    ConsumoTotalActual = results[0].Consumo_total_mensual;
+    ActualizaConsumo(ConsumoTotalActual);
 });
 
 socketStream.emit('solicitaAnos');
@@ -323,8 +325,27 @@ function recibeTweets(resultados) {
         $ulLista.append($liNuevoItem);
     };
 }
-//FUNCION LISTA
+
+function ActualizaConsumo(ConsumoTotalActual) {
+    console.log(ConsumoTotalActual);
+    console.log(mesActual);
+    $('#MesActual').text(mesActual);
+    $('#ConsumoTotal').text(ConsumoTotalActual);
+}
 
 
 
-//La tabla para el consumo de la base de datos debe contener: Fecha[AAAA,MM,DD], HORA, LECTURA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
