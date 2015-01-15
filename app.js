@@ -16,10 +16,7 @@ var nuevoTweet = new EventEmitter();
 var pinEmitter = new EventEmitter();
 var sensor = new EventEmitter();
 var config = require('./config');
-db = config.database;
-
-console.log(db.host);
-console.log(db.user);
+var db = config.database;
 
 /*
  * Se declaran algunas variables globales para la lógica
@@ -30,12 +27,11 @@ carga[0] = 0;
 carga[1] = 0;
 
 var twit = new twitter({
-    consumer_key: 'Wu3Ztet4FN240Kzzu0Eow',
-    consumer_secret: 'i5ecmTQVFAVvlewlKB08Wm2z6V4DHPPUszHmEeBMz04',
-    access_token_key: '24846645-L7RiyboD7VRUPgcGXHTxUKELo4ACL8YFCwpWnL0cj',
-    access_token_secret: 'GvJkYZQuma7DixOaug9QBEBneaHrW8Ex8m9ipatBGY'
+    consumer_key        : config.twitterkeychain.consumer_key,
+    consumer_secret     : config.twitterkeychain.consumer_secret,
+    access_token_key    : config.twitterkeychain.access_token_key,
+    access_token_secret : config.twitterkeychain.access_token_secret
 });
-
 
 // FIRMWARE
 require('./firmware/mega2560')(pinEmitter, sensor, insertaLectura);
@@ -146,7 +142,6 @@ var stream = io.of('/stream').on('connection', function(socket) {
     });
     socket.on('solicitaGrafica', function() {
         recuperaActual(socket);
-        //recuperaPeriodo(socket);
     });
     socket.on('solicitaAnos', function() {
         recuperaListaAnos(socket);
@@ -159,7 +154,7 @@ var stream = io.of('/stream').on('connection', function(socket) {
     });
 });
 
-/*
+
 //Iniciamos la conexión vía Twitter para recibir comandos de ON/OF
 twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
     stream.on('data', function(data) {
@@ -174,7 +169,7 @@ twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
         });
     });
 });
-*/
+
 
 /*
  * Declaración de las funciones y definición para posible reutilización de
@@ -190,11 +185,11 @@ twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
 function switchBandera(n, onOff) {
     if (carga[n] === 1 && onOff === 0) {
         carga[n] = 0;
-        raspberry.apagaPin(n);
+        //raspberry.apagaPin(n);
     }    
     else if (carga[n] === 0 && onOff === 1) {
         carga[n] = 1;
-        raspberry.enciendePin(n);
+        //raspberry.enciendePin(n);
     }   
     else
         console.log('algunError');
