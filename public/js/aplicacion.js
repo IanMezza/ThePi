@@ -4,8 +4,8 @@
 y se verfica el correcto funcionamiento de los sockets.*/
 
 // TODO Fijar la IP
-var socketControl = io.connect('http://192.168.1.67:3000/control');
-var socketStream = io.connect('http://192.168.1.67:3000/stream');
+var socketControl = io.connect('http://192.168.0.6:3000/control');
+var socketStream = io.connect('http://192.168.0.6:3000/stream');
 
 socketControl.on('nuevoTwitt', function(usuario, hashtag) {
     console.log(usuario, hashtag);
@@ -330,7 +330,7 @@ function ActualizaConsumo(ConsumoTotalActual) {
     console.log(ConsumoTotalActual);
     console.log(mesActual);
     $('#MesActual').text(mesActual);
-    $('#ConsumoTotal').text(ConsumoTotalActual);
+    $('#ConsumoTotal').text(ConsumoTotalActual.toString().concat(' kWh'));
 }
 
 
