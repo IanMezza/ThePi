@@ -53,8 +53,9 @@ exports.apagaPin = function(n) {
     }  
 }
 
-exports.huboCambio = function(actualizaCargas) {
+exports.huboCambio = function(actualizaCargas, socket, carga) {
 	gpio22.on("change", function(val) {
+        //carga[0] = 0;
 	       actualizaCargas(socket, carga);
 	    });
 	gpio27.on("change", function(val) {

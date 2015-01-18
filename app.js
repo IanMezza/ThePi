@@ -73,7 +73,7 @@ var servidor = http.createServer(app).listen(app.get('port'), function() {
     console.log('Express server listening on port ' + app.get('port'));
 });
 
-//raspberry.init(iniciaPines);
+raspberry.iniciaPines();
 //i2c();
 
 servidor.once('connection', function (stream) {
@@ -105,7 +105,7 @@ var control = io.of('/control').on('connection', function(socket) {
 
 
     // Se monitorean los cambios en el GPIO y se actualizan las cargas
-    //raspberry.huboCambio(actualizaCargas);
+    raspberry.huboCambio(actualizaCargas, socket, carga);
 
     socket.emit('controlConectado');
     actualizaCargas(socket, carga);
@@ -185,12 +185,12 @@ twit.stream('statuses/filter', {'follow': ['24846645']}, function(stream) {
 function switchBandera(n, onOff) {
     if (carga[n] === 1 && onOff === 0) {
         carga[n] = 0;
-        //raspberry.apagaPin(n);
-    }    
+        raspberry.apagaPin(n);
+    }
     else if (carga[n] === 0 && onOff === 1) {
         carga[n] = 1;
-        //raspberry.enciendePin(n);
-    }   
+        raspberry.enciendePin(n);
+    }
     else
         console.log('algunError');
     return carga[n];
@@ -204,6 +204,8 @@ function switchBandera(n, onOff) {
  */
 function actualizaCargas(socket, carga) {
     socket.emit('actualiza', carga);
+    console.log("Actualiza carga");
+    console.log(carga);
 }
 
 /*
