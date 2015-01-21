@@ -5,6 +5,7 @@ var express = require('express');
 var routes = require('./routes');
 var user = require('./routes/user');
 var http = require('http');
+http.globalAgent.maxSockets = 50;
 var path = require('path');
 var app = express();
 //var rasp2c = require('./lib/pi2c');
@@ -22,9 +23,9 @@ var db = config.database;
  * Se declaran algunas variables globales para la lógica
  * de la aplicación.
  */
-var carga = new Array();
-carga[0] = 0;
-carga[1] = 0;
+var carga = [0, 0];//= new Array();
+// carga[0] = 0;
+// carga[1] = 0;
 
 var twit = new twitter({
     consumer_key        : config.twitterkeychain.consumer_key,
@@ -76,9 +77,9 @@ var servidor = http.createServer(app).listen(app.get('port'), function() {
 raspberry.iniciaPines();
 //i2c();
 
-servidor.once('connection', function (stream) {
-  console.log('someone connected!');
-});
+// servidor.once('connection', function (stream) {
+//   console.log('someone connected!');
+// });
 
 /*
  * Se vincula la variable de socket 'io' al servidor http recien creado
@@ -111,6 +112,7 @@ var control = io.of('/control').on('connection', function(socket) {
     actualizaCargas(socket, carga);
     socket.on('clienteControl', function() {
         recuperaTweets(socket);
+        recuperaFacturas(socket);
     });
 
     /*
@@ -126,7 +128,7 @@ var control = io.of('/control').on('connection', function(socket) {
     });
 
     socket.on('enviaCadena', function(cadena){
-        insertaUsuario(cadena);    
+        insertaUsuario(cadena);
     });
     socket.on('consultaUnMes', function(yearConsulta, mesConsulta) {
         recuperaUnMes(socket, yearConsulta, mesConsulta);
@@ -204,8 +206,8 @@ function switchBandera(n, onOff) {
  */
 function actualizaCargas(socket, carga) {
     socket.emit('actualiza', carga);
-    console.log("Actualiza carga");
-    console.log(carga);
+    // console.log("Actualiza carga");
+    // console.log(carga);
 }
 
 /*
@@ -241,6 +243,14 @@ function recuperaTweets(socket) {
     });
 }
 
+function recuperaFacturas (socket) {
+    cliente = conectaMySQL();
+    cliente.query('USE consumo');
+    cliente.query('SELECT * FROM facturacion', function (err, results) {
+        enviaDatos(err, results, socket, 'facturas');
+    });
+}
+
 /*
  * Hace una consulta de todos los elementos desde inicio del mas actual hasta la fecha actual
  */
@@ -249,7 +259,7 @@ function recuperaActual(socket) {
     //console.log(fecha);
     var mesActual = fecha.getMonth()+1;
     var fechaInicio = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + '01');
-    var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate())); 
+    var fechaActual = String(fecha.getFullYear() + '-' + String(mesActual) +'-' + String(fecha.getDate()));
     cliente = conectaMySQL();
     cliente.query('USE consumo');
     cliente.query('SELECT DATE(fecha) AS FECHA, SUM(lectura) AS Consumo_total FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\' GROUP BY FECHA', function(err, results) { //FIXME
@@ -257,9 +267,8 @@ function recuperaActual(socket) {
     });
     cliente.query('SELECT SUM(lectura) AS Consumo_total_mensual FROM registro WHERE fecha >= \'' + fechaInicio + '\' AND fecha <= \'' + fechaActual + '\'', function(err, results) {
         enviaDatos(err, results, socket, 'ConsumoTotalActual');
-        console.log(results);
+        //console.log(results);
     });
-    
 }
 /*
  * Hace una consulta de los elementos de la tabla dentro del periodo acotado por
@@ -309,7 +318,7 @@ function insertaTweet(usuario, hashtag) {
         }
         console.log('Ya estuvo');
         nuevoTweet.emit('nuevoTweet');
-    });   
+    });
     cliente.end();
 }
 
@@ -366,7 +375,7 @@ function mesAmes(mesConsulta) {
     var meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     for (i = 0; i <= 11; i++) {
         if (mesConsulta === meses[i]) return i+1;
-    } 
+    }
 }
 
 function enciendePin (n) {
