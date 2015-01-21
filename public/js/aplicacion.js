@@ -4,16 +4,20 @@
 y se verfica el correcto funcionamiento de los sockets.*/
 
 // TODO Fijar la IP
-var socketControl = io.connect('http://192.168.0.6:3000/control');
-var socketStream = io.connect('http://192.168.0.6:3000/stream');
+var socketControl = io.connect('http://192.168.1.64:3000/control');
+var socketStream = io.connect('http://192.168.1.64:3000/stream');
 
-socketControl.on('nuevoTwitt', function(usuario, hashtag) {
+socketControl.on('nuevoTwitt', function (usuario, hashtag) {
     console.log(usuario, hashtag);
 });
 
 socketControl.on('Tweets', function(results) {
-    //console.log(results);
     recibeTweets(results);
+});
+
+socketControl.on('facturas', function (results) {
+    //console.log(results);
+    recibeFacturas(results);
 });
 /*
  * CONTROL DE CARGAS
@@ -304,7 +308,7 @@ function recibeListaAnos(resultados) {
     for (var i = resultados.length - 1; i >= 0; i--) {
         var $liNuevoItem = $('<li/>').html('<a href="#" title="Haz click" id='+String(resultados[i].years)+'>'+resultados[i].years+'</a>');
         $ulLista.append($liNuevoItem);
-    };
+    }
 }
 
 function recibeListaMeses(resultados) {
@@ -313,7 +317,7 @@ function recibeListaMeses(resultados) {
     for (var i = 0; i <= resultados.length - 1; i++) {
         var $liNuevoItem = $('<li/>').html('<a href="#" title="Haz click">'+meses[resultados[i].meses-1]+'</a>');
         $ulLista.append($liNuevoItem);
-    };
+    }
 }
 
 
@@ -323,14 +327,62 @@ function recibeTweets(resultados) {
     for (var i = resultados.length - 5; i <= resultados.length - 1; i++) {  // Solo los ultimos 5 tweets
         var $liNuevoItem = $('<li class="list-group-item"/>').html(resultados[i].hora+' '+resultados[i].usuario+' '+resultados[i].tweet);
         $ulLista.append($liNuevoItem);
-    };
+    }
 }
 
 function ActualizaConsumo(ConsumoTotalActual) {
+    var cuenta = calcPagoActual(ConsumoTotalActual);
     console.log(ConsumoTotalActual);
     console.log(mesActual);
     $('#MesActual').text(mesActual);
     $('#ConsumoTotal').text(ConsumoTotalActual.toString().concat(' kWh'));
+    $('#pagoAprox').text(cuenta.toFixed(2).concat(' pesos'));
+}
+
+function calcPagoActual (ConsumoTotalActual) {
+    var pago = 0;
+    var consumoBasico = 0;
+    var consumoIntermedio = 0;
+    var consumoExcedente = 0;
+    /*  Verificar tarifas de CFE (Tarifa 1 2015) 
+     *  Consumo básico      $ 0.809 por cada uno de los primeros 75 (setenta y cinco) kilowatts-hora.
+     *  Consumo intermedio  $ 0.976 por cada uno de los siguientes 65 (sesenta y cinco) kilowatts-hora.
+     *  Consumo excedente   $ 2.859 por cada kilowatt-hora adicional a los anteriores.
+     */
+    if (ConsumoTotalActual > 75) {
+        consumoBasico = 75;
+        consumoIntermedio  = ConsumoTotalActual - consumoBasico;
+        if (consumoIntermedio > 65) {
+            consumoIntermedio = 65;
+            consumoExcedente = ConsumoTotalActual - (consumoBasico + consumoIntermedio);
+        }
+        console.log('Consumo básico ', consumoBasico);
+        console.log('Consumo intermedio ', consumoIntermedio);
+        console.log('Consumo excedente', consumoExcedente);
+    }
+    else {
+        consumoBasico = ConsumoTotalActual;
+        console.log('Consumo básico ', consumoBasico);
+        console.log('Consumo intermedio ', consumoIntermedio);
+        console.log('Consumo excedente', consumoExcedente);
+    }
+    if (consumoBasico < 25) {
+        pago = 25 * 0.809;
+        console.log('Su pago, gracias ', pago);
+    } else{
+        pago = consumoBasico * 0.809 + consumoIntermedio * 0.976 + consumoExcedente * 2.859;
+        console.log('Su pago, gracias ', pago);
+    }
+    return pago;
+}
+
+function recibeFacturas(resultados) {
+    var $ulLista;
+    $ulLista = $('#listaFacturas').find('ul');
+    for (var i = resultados.length - 5; i <= resultados.length - 1; i++) {  // Solo las ultimas 5 facturas
+        var $liNuevoItem = $('<li class="list-group-item"/>').html('Fecha: '+resultados[i].fecha.slice(0, 10)+' Consumo: '+resultados[i].consumo+'kwH Pago: $'+resultados[i].pago);
+        $ulLista.append($liNuevoItem);
+    }
 }
 
 
